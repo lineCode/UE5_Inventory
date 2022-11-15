@@ -19,6 +19,9 @@ struct FItemBase
 
 	UPROPERTY(BlueprintReadWrite)
 	FString description;
+
+	UPROPERTY(BlueprintReadWrite)
+	UMaterialInterface* ItemIcon;
 };
 
 // USTRUCT(BlueprintType)
@@ -48,7 +51,7 @@ struct FInvCell
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class UE5_INVENTORY_API UInventory : public UObject
 {
 	GENERATED_BODY()
