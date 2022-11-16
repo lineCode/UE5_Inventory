@@ -6,18 +6,18 @@
 
 void UInventory::AddItem(FItemBase item)
 {
-	// If inventory already contains item of the same type, add it to the corresponding cell
 	if (auto const FoundedCell = this->FindCellByItem(item); FoundedCell != nullptr)
 	{
-		//TODO: mock push to states
+		// If inventory already contains items of the same type, increase quantity in the corresponding cell
+		
+		//TODO: Create a system for binding the corresponding item state to the item
 		// FoundedCell->item_states.Push(state);
 		
 		FoundedCell->quantity += 1;
 	}
-
-	// If it is not exists, then create new cell and add an item
 	else
 	{
+		// If it isn't exists, then create new cell and add an item
 		FInvCell NewCell;
 		
 		NewCell.item = item;
@@ -32,18 +32,17 @@ void UInventory::AddItem(FItemBase item)
 
 void UInventory::RemoveItem(FItemBase item)
 {
-	// Try to find ad item in the inventory
+	// Try to find an item in the inventory
 	if (auto const FoundedCell = this->FindCellByItem(item); FoundedCell != nullptr)
 	{
-		// Reduce quantity by one if there are already multiple items of the same type
 		if (FoundedCell->quantity > 1)
 		{
+			// Reduce quantity by one if there are already multiple items of the same type
 			FoundedCell->quantity -= 1;
 		}
-		
-		// Remove cell if is is the only one item of corresponding type
 		else
 		{
+			// Remove cell if it contains only the one item of corresponding type
 			this->Cells.Remove(FoundedCell);
 		}
 	}

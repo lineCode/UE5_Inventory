@@ -24,6 +24,13 @@ struct FItemBase
 	UMaterialInterface* ItemIcon;
 };
 
+//TODO: Create a system for binding the corresponding item state to the item
+/* Note:
+ *	We also need to keep track of item states inside the inventory.
+ *	The main thing to implement is to bind a unique state to an individual item.
+ *	It is unclear to us how it will look in the current state of the project.
+ */
+
 // USTRUCT(BlueprintType)
 // struct FItemState
 // {
