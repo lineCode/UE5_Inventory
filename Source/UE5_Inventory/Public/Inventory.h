@@ -51,7 +51,7 @@ struct FInvCell
 /**
  * 
  */
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, BlueprintType)
 class UE5_INVENTORY_API UInventory : public UObject
 {
 	GENERATED_BODY()
