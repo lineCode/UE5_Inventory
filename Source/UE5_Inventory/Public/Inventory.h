@@ -21,6 +21,12 @@ struct FItemBase
 	FString description;
 
 	UPROPERTY(BlueprintReadWrite)
+	bool isStackable;
+
+	UPROPERTY(BlueprintReadWrite)
+	UTexture2D *Icon;
+	
+	UPROPERTY(BlueprintReadWrite)
 	UMaterialInterface* ItemIcon;
 };
 
@@ -46,6 +52,9 @@ struct FInvCell
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite)
+	int32 index;
+
+	UPROPERTY(BlueprintReadWrite)
 	FItemBase item;
 	
 	UPROPERTY(BlueprintReadWrite)
@@ -69,32 +78,56 @@ public:
 
 	// Adds an item to the inventory
 	UFUNCTION(BlueprintCallable)
-	void AddItem(FItemBase item);
+	void AddItem(FItemBase Item);
 
 	// Removes an item from the inventory
 	UFUNCTION(BlueprintCallable)
-	void RemoveItem(FItemBase item);
+	void RemoveItem(FItemBase Item);
 
 	// Swaps two items in inventory
-	void SwapItems(FItemBase ls_item, FItemBase rs_item);
+	void SwapItems(FItemBase Ls_Item, FItemBase Rs_Item);
 
 	// Gets an item by id
-	FItemBase GetItem(int32 item_id);
+	// FItemBase GetItem(int32 Item_ID);
 
 	// Debug
 	UFUNCTION(BlueprintCallable)
 	void PrintInventory();
-	
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	int32 GetAmountOfCells();
+
+	UFUNCTION(BlueprintCallable)
+	void SetAmountOfCells(int32 NewValue);
+
+	UFUNCTION(BlueprintCallable)
+	bool IsCellEmpty(FInvCell Cell);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	void GetItemAtIndex(int32 index, bool &IsCellEmpty, FItemBase &Item, int32 &Amount);
+
+	UFUNCTION(BlueprintCallable)
+	void SearchEmptyCell(bool &IsSuccess, int32 &Index);
+
+	UFUNCTION(BlueprintCallable)
+	void SearchFreeStack(FItemBase Item, bool &IsSuccess, int32 &Index);
+
+	UFUNCTION(BlueprintCallable)
+	void AddItemNew(FItemBase Item, int32 Amount, bool &IsSuccess, int32 &Rest, int32 &CellIndex);
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetAmountAtIndex(int32 Index);
 	
 private:
-
 	// Finds a cell by item
-	TSharedPtr<FInvCell> FindCellByItem(const FItemBase& Item);
+	TSharedPtr<FInvCell> FindCellByItem(const FItemBase &Item);
 
-	// Quantity of cells
-	uint32 Capacity;
+	// Amount of cells
+	uint32 AmountOfCells = 20;
 
 	// Array of cells
 	TArray<TSharedPtr<FInvCell>> Cells;
-		
+
+	// Max size of stack
+	int32 MaxStackSize = 99;
 };
