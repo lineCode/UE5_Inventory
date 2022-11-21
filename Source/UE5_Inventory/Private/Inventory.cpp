@@ -4,73 +4,6 @@
 // #include "Inventory.h"
 #include "UE5_Inventory/Public/Inventory.h"
 
-#include "IPropertyTable.h"
-
-void UInventory::AddItem(FItemBase Item)
-{
-	if (auto const FoundedCell = this->FindCellByItem(Item); FoundedCell != nullptr)
-	{
-		// If inventory already contains items of the same type, increase quantity in the corresponding cell
-
-		//TODO: Create a system for binding the corresponding item state to the item
-		// FoundedCell->item_states.Push(state);
-
-		FoundedCell->quantity += 1;
-	}
-	else
-	{
-		// If it isn't exists, then create new cell and add an item
-		FInvCell NewCell;
-
-		NewCell.item = Item;
-		// NewCell.item_states.Push(state);
-		NewCell.quantity = 1;
-
-		const auto CellPtr = MakeShared<FInvCell>(NewCell);
-
-		// this->Cells.Push(CellPtr);
-	}
-}
-
-void UInventory::RemoveItem(FItemBase Item)
-{
-	// Try to find an item in the inventory
-	if (auto const FoundedCell = this->FindCellByItem(Item); FoundedCell != nullptr)
-	{
-		if (FoundedCell->quantity > 1)
-		{
-			// Reduce quantity by one if there are already multiple items of the same type
-			FoundedCell->quantity -= 1;
-		}
-		else
-		{
-			// Remove cell if it contains only the one item of corresponding type
-			// this->Cells.Remove(FoundedCell);
-		}
-	}
-}
-
-void UInventory::SwapItems(FItemBase ls_item, FItemBase Rs_Item)
-{
-}
-
-TSharedPtr<FInvCell> UInventory::FindCellByItem(const FItemBase &Item)
-{
-	for (auto Cell : this->Cells)
-	{
-		if (Cell.item.id == Item.id)
-		{
-			// return Cell;
-			return nullptr;
-		}
-	}
-	return nullptr;
-}
-
-// FItemBase UInventory::GetItem(int32 Item_ID)
-// {
-// }
-
 void UInventory::PrintInventory()
 {
 	UE_LOG(LogTemp, Log, TEXT("Number Of Cells: %d"), Cells.Num());
@@ -175,10 +108,12 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool &IsSuccess, int32
 			// if overstack
 			if (Cells[foundIndex].quantity + Amount > MaxStackSize)
 			{
+				int32 amountLocal = Cells[foundIndex].quantity + Amount - MaxStackSize;
+				
 				Cells[foundIndex].item = Item;
 				Cells[foundIndex].quantity = MaxStackSize;
 
-				AddItemNew(Item, Cells[foundIndex].quantity + Amount - MaxStackSize, isSuccess, rest, foundIndex);
+				AddItemNew(Item, amountLocal, isSuccess, rest, foundIndex);
 
 				// return values
 				IsSuccess = true;
@@ -273,6 +208,75 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool &IsSuccess, int32
 			IsSuccess = false;
 			Rest = Amount;
 			CellIndex = foundIndex;
+		}
+	}
+}
+
+void UInventory::RemoveItemAtIndex(int32 Index, int32 Amount, bool &IsSuccess)
+{
+	IsSuccess = false;
+	
+	if (!IsCellEmpty(Index))
+	{
+		if (Amount >= GetAmountAtIndex(Index))
+		{
+			Cells[Index].item.id = NULL;
+			Cells[Index].item.name = nullptr;
+			Cells[Index].item.description = nullptr;
+			Cells[Index].item.isStackable = nullptr;
+			Cells[Index].item.Icon = nullptr;
+
+			Cells[Index].quantity = NULL;
+			
+			IsSuccess = true;
+		}
+		else
+		{
+			Cells[Index].quantity -= Amount;
+
+			IsSuccess = true;
+		}
+	}
+}
+
+void UInventory::SwapCells(int32 Index1, int32 Index2, bool &IsSuccess)
+{
+	IsSuccess = false;
+	
+	// check if indices are not out of bounds
+	if (Index1 <= Cells.Num() - 1 || Index2 <= Cells.Num() - 1)
+	{
+		FInvCell cellLocal = Cells[Index1];
+
+		Cells[Index1] = Cells[Index2];
+		Cells[Index2] = cellLocal;
+
+		IsSuccess = true;
+	}
+}
+
+void UInventory::SplitStack(int32 StackIndex, int32 Amount, bool &IsSuccess)
+{
+	IsSuccess = false;
+	
+	if (!IsCellEmpty(StackIndex))
+	{
+		if (Cells[StackIndex].item.isStackable && Cells[StackIndex].quantity > Amount)
+		{
+			bool isSuccess;
+			int index;
+			
+			SearchEmptyCell(isSuccess, index);
+
+			if (isSuccess)
+			{
+				Cells[StackIndex].quantity -= Amount;
+
+				Cells[index].item = Cells[StackIndex].item;
+				Cells[index].quantity = Amount;
+
+				IsSuccess = true;
+			}
 		}
 	}
 }

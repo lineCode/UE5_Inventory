@@ -64,6 +64,15 @@ struct FInvCell
 	// TArray<FItemState> item_states;
 };
 
+UENUM(BlueprintType)
+enum EItemCategories
+{
+	Consumeable,
+	Equipment,
+	QuestItems,
+	Readables
+};
+
 /**
  * 
  */
@@ -73,22 +82,6 @@ class UE5_INVENTORY_API UInventory : public UActorComponent
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this component's properties
-	// UInventoryComponent();
-
-	// Adds an item to the inventory
-	UFUNCTION(BlueprintCallable)
-	void AddItem(FItemBase Item);
-
-	// Removes an item from the inventory
-	UFUNCTION(BlueprintCallable)
-	void RemoveItem(FItemBase Item);
-
-	// Swaps two items in inventory
-	void SwapItems(FItemBase Ls_Item, FItemBase Rs_Item);
-
-	// Gets an item by id
-	// FItemBase GetItem(int32 Item_ID);
 
 	// Debug
 	UFUNCTION(BlueprintCallable)
@@ -116,6 +109,15 @@ public:
 	void AddItemNew(FItemBase Item, int32 Amount, bool &IsSuccess, int32 &Rest, int32 &CellIndex);
 
 	UFUNCTION(BlueprintCallable)
+	void RemoveItemAtIndex(int32 Index, int32 Amount, bool &IsSuccess);
+
+	UFUNCTION(BlueprintCallable)
+	void SwapCells(int32 Index1, int32 Index2, bool &IsSuccess);
+
+	UFUNCTION(BlueprintCallable)
+	void SplitStack(int32 StackIndex, int32 Amount, bool &IsSuccess);
+	
+	UFUNCTION(BlueprintCallable)
 	int32 GetAmountAtIndex(int32 Index);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -126,9 +128,6 @@ public:
 	TArray<FInvCell> Cells;
 	
 private:
-	// Finds a cell by item
-	TSharedPtr<FInvCell> FindCellByItem(const FItemBase &Item);
-
 	// Amount of cells
 	uint32 AmountOfCells = 20;
 	
