@@ -11,22 +11,22 @@ struct FItemBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 id;
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString name;
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString description;
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool isStackable;
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UTexture2D *Icon;
 	
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UMaterialInterface* ItemIcon;
 };
 
@@ -68,7 +68,7 @@ struct FInvCell
  * 
  */
 UCLASS(Blueprintable, BlueprintType)
-class UE5_INVENTORY_API UInventory : public UObject
+class UE5_INVENTORY_API UInventory : public UActorComponent
 {
 	GENERATED_BODY()
 	
@@ -101,7 +101,7 @@ public:
 	void SetAmountOfCells(int32 NewValue);
 
 	UFUNCTION(BlueprintCallable)
-	bool IsCellEmpty(FInvCell Cell);
+	bool IsCellEmpty(int32 CellIndex);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	void GetItemAtIndex(int32 index, bool &IsCellEmpty, FItemBase &Item, int32 &Amount);
@@ -117,6 +117,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetAmountAtIndex(int32 Index);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	void GetCells(TArray<FInvCell> &Result);
+	
+	// Array of cells
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FInvCell> Cells;
 	
 private:
 	// Finds a cell by item
@@ -124,10 +131,8 @@ private:
 
 	// Amount of cells
 	uint32 AmountOfCells = 20;
-
-	// Array of cells
-	TArray<TSharedPtr<FInvCell>> Cells;
-
+	
 	// Max size of stack
 	int32 MaxStackSize = 99;
+
 };

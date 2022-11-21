@@ -28,7 +28,7 @@ void UInventory::AddItem(FItemBase Item)
 
 		const auto CellPtr = MakeShared<FInvCell>(NewCell);
 
-		this->Cells.Push(CellPtr);
+		// this->Cells.Push(CellPtr);
 	}
 }
 
@@ -45,7 +45,7 @@ void UInventory::RemoveItem(FItemBase Item)
 		else
 		{
 			// Remove cell if it contains only the one item of corresponding type
-			this->Cells.Remove(FoundedCell);
+			// this->Cells.Remove(FoundedCell);
 		}
 	}
 }
@@ -58,9 +58,10 @@ TSharedPtr<FInvCell> UInventory::FindCellByItem(const FItemBase &Item)
 {
 	for (auto Cell : this->Cells)
 	{
-		if (Cell->item.id == Item.id)
+		if (Cell.item.id == Item.id)
 		{
-			return Cell;
+			// return Cell;
+			return nullptr;
 		}
 	}
 	return nullptr;
@@ -77,10 +78,10 @@ void UInventory::PrintInventory()
 
 	for (auto InvCell : Cells)
 	{
-		UE_LOG(LogTemp, Log, TEXT("ID: %d"), InvCell->item.id);
-		UE_LOG(LogTemp, Log, TEXT("Name: %s"), *(InvCell->item.name));
-		UE_LOG(LogTemp, Log, TEXT("Description: %s"), *(InvCell->item.description));
-		UE_LOG(LogTemp, Log, TEXT("Quantity: %d"), InvCell->quantity);
+		UE_LOG(LogTemp, Log, TEXT("ID: %d"), InvCell.item.id);
+		UE_LOG(LogTemp, Log, TEXT("Name: %s"), *(InvCell.item.name));
+		UE_LOG(LogTemp, Log, TEXT("Description: %s"), *(InvCell.item.description));
+		UE_LOG(LogTemp, Log, TEXT("Quantity: %d"), InvCell.quantity);
 		UE_LOG(LogTemp, Log, TEXT("\n"));
 	}
 
@@ -97,9 +98,9 @@ void UInventory::SetAmountOfCells(int32 NewValue)
 	this->AmountOfCells = NewValue;
 }
 
-bool UInventory::IsCellEmpty(FInvCell Cell)
+bool UInventory::IsCellEmpty(int32 CellIndex)
 {
-	if (Cell.quantity == 0)
+	if (Cells[CellIndex].quantity == 0) 
 	{
 		return true;
 	}
@@ -110,14 +111,14 @@ bool UInventory::IsCellEmpty(FInvCell Cell)
 void UInventory::GetItemAtIndex(int32 index, bool &IsCellEmpty, FItemBase &Item, int32 &Amount)
 {
 	// check if a cell by this index is empty
-	IsCellEmpty = UInventory::IsCellEmpty(*this->Cells[index].Get());
+	IsCellEmpty = UInventory::IsCellEmpty(index);
 	// IsCellEmpty = false;
 
 	// if not empty...
 	if (!IsCellEmpty)
 	{
-		Item = this->Cells[index].Get()->item;
-		Amount = this->Cells[index].Get()->quantity;
+		Item = this->Cells[index].item;
+		Amount = this->Cells[index].quantity;
 	}
 }
 
@@ -127,7 +128,7 @@ void UInventory::SearchEmptyCell(bool &IsSuccess, int32 &Index)
 
 	for (int i = 0; i < Cells.Num(); i++)
 	{
-		if (IsCellEmpty(*Cells[i]))
+		if (IsCellEmpty(i))
 		{
 			IsSuccess = true;
 			Index = i;
@@ -142,10 +143,10 @@ void UInventory::SearchFreeStack(FItemBase Item, bool &IsSuccess, int32 &Index)
 
 	for (int i = 0; i < Cells.Num(); i++)
 	{
-		if (!IsCellEmpty(*Cells[i]))
+		if (!IsCellEmpty(i))
 		{
 			// if given item has the same type with founded item, and amount of those items lower than maximum size of stack
-			if (Cells[i].Get()->item.id == Item.id && Cells[i].Get()->quantity < MaxStackSize)
+			if (Cells[i].item.id == Item.id && Cells[i].quantity < MaxStackSize)
 			{
 				IsSuccess = true;
 				Index = i;
@@ -172,12 +173,12 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool &IsSuccess, int32
 			foundIndex = index;
 			
 			// if overstack
-			if (Cells[foundIndex].Get()->quantity + Amount > MaxStackSize)
+			if (Cells[foundIndex].quantity + Amount > MaxStackSize)
 			{
-				Cells[foundIndex].Get()->item = Item;
-				Cells[foundIndex].Get()->quantity = MaxStackSize;
+				Cells[foundIndex].item = Item;
+				Cells[foundIndex].quantity = MaxStackSize;
 
-				AddItemNew(Item, Cells[foundIndex].Get()->quantity + Amount - MaxStackSize, isSuccess, rest, foundIndex);
+				AddItemNew(Item, Cells[foundIndex].quantity + Amount - MaxStackSize, isSuccess, rest, foundIndex);
 
 				// return values
 				IsSuccess = true;
@@ -188,8 +189,8 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool &IsSuccess, int32
 			// if no overstack
 			else
 			{
-				Cells[foundIndex].Get()->item = Item;
-				Cells[foundIndex].Get()->quantity = Cells[foundIndex].Get()->quantity + Amount;
+				Cells[foundIndex].item = Item;
+				Cells[foundIndex].quantity = Cells[foundIndex].quantity + Amount;
 				
 				IsSuccess = true;
 				Rest = 0;
@@ -209,8 +210,8 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool &IsSuccess, int32
 				
 				if (Amount > MaxStackSize)
 				{
-					Cells[foundIndex].Get()->item = Item;
-					Cells[foundIndex].Get()->quantity = MaxStackSize;
+					Cells[foundIndex].item = Item;
+					Cells[foundIndex].quantity = MaxStackSize;
 					
 					AddItemNew(Item, Amount - MaxStackSize, isSuccess, rest, foundIndex);
 
@@ -221,8 +222,8 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool &IsSuccess, int32
 
 				else
 				{
-					Cells[foundIndex].Get()->item = Item;
-					Cells[foundIndex].Get()->quantity = Amount;
+					Cells[foundIndex].item = Item;
+					Cells[foundIndex].quantity = Amount;
 
 					IsSuccess = true;
 					Rest = 0;
@@ -248,8 +249,8 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool &IsSuccess, int32
 		{
 			foundIndex = index;
 
-			Cells[foundIndex].Get()->item = Item;
-			Cells[foundIndex].Get()->quantity = 1;
+			Cells[foundIndex].item = Item;
+			Cells[foundIndex].quantity = 1;
 
 			if (Amount > 1)
 			{
@@ -278,5 +279,17 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool &IsSuccess, int32
 
 int32 UInventory::GetAmountAtIndex(int32 Index)
 {
-	return Cells[Index].Get()->quantity;
+	return Cells[Index].quantity;
+}
+
+void UInventory::GetCells(TArray<FInvCell> &Result)
+{
+	TArray<FInvCell> CellsLocal;
+	
+	for (int i = 0; i < this->Cells.Num(); i++)
+	{
+		CellsLocal[i] = this->Cells[i];
+	}
+
+	Result = CellsLocal;
 }
