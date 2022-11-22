@@ -281,6 +281,47 @@ void UInventory::SplitStack(int32 StackIndex, int32 Amount, bool &IsSuccess)
 	}
 }
 
+void UInventory::AddToIndex(int32 FromIndex, int32 ToIndex, bool &IsSuccess)
+{
+	IsSuccess = false;
+	
+	if (Cells[FromIndex].item.id == Cells[ToIndex].item.id && Cells[ToIndex].quantity < MaxStackSize && Cells[FromIndex].item.isStackable)
+	{
+		if (MaxStackSize - GetAmountAtIndex(ToIndex) >= GetAmountAtIndex(FromIndex))
+		{
+			Cells[ToIndex].item = Cells[FromIndex].item;
+			Cells[ToIndex].quantity = GetAmountAtIndex(FromIndex) + GetAmountAtIndex(ToIndex);
+
+			bool isSuccess;
+			RemoveItemAtIndex(FromIndex, GetAmountAtIndex(FromIndex), isSuccess);
+		}
+		else
+		{
+			// Cells[FromIndex].item = Cells[FromIndex].item;
+			Cells[FromIndex].quantity = GetAmountAtIndex(FromIndex) - (MaxStackSize - GetAmountAtIndex(ToIndex));
+
+			Cells[ToIndex].item = Cells[FromIndex].item;
+			Cells[ToIndex].quantity = MaxStackSize;
+		}
+
+		IsSuccess = true;
+	}
+}
+
+void UInventory::SplitStackToIndex(int32 FromIndex, int32 ToIndex, int32 Amount, bool &IsSuccess)
+{
+	IsSuccess = false;
+
+	if (IsCellEmpty(ToIndex) && !IsCellEmpty(FromIndex) && Cells[FromIndex].item.isStackable
+		&& Cells[FromIndex].quantity > 1 && Cells[FromIndex].quantity > Amount)
+	{
+		Cells[FromIndex].quantity -= Amount;
+
+		Cells[ToIndex].item = Cells[FromIndex].item;
+		Cells[ToIndex].quantity = Amount;
+	}
+}
+
 int32 UInventory::GetAmountAtIndex(int32 Index)
 {
 	return Cells[Index].quantity;

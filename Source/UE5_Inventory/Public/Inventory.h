@@ -116,6 +116,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SplitStack(int32 StackIndex, int32 Amount, bool &IsSuccess);
+
+	UFUNCTION(BlueprintCallable)
+	void AddToIndex(int32 FromIndex, int32 ToIndex, bool &IsSuccess);
+
+	UFUNCTION(BlueprintCallable)
+	void SplitStackToIndex(int32 FromIndex, int32 ToIndex, int32 Amount, bool &IsSuccess);
 	
 	UFUNCTION(BlueprintCallable)
 	int32 GetAmountAtIndex(int32 Index);
