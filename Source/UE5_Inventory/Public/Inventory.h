@@ -81,8 +81,8 @@ class UE5_INVENTORY_API UInventory : public UActorComponent
 {
 	GENERATED_BODY()
 	
-public:	
-
+public:
+	
 	// Debug
 	UFUNCTION(BlueprintCallable)
 	void PrintInventory();
