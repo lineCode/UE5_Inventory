@@ -1,39 +1,152 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
-// #include "Inventory.h"
 #include "UE5_Inventory/Public/Inventory.h"
 
-void UInventory::PrintInventory()
-{
-	UE_LOG(LogTemp, Log, TEXT("Number Of Cells: %d"), Cells.Num());
-	UE_LOG(LogTemp, Log, TEXT("\n\n"));
+/*--------------------------------------------- PUBLIC ---------------------------------------------------------------*/
 
-	for (auto InvCell : Cells)
+void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool& IsSuccess, int32& Rest, int32& CellIndex)
+{
+	int32 iFoundIndex = NULL;
+	bool bIsSuccess;
+	int32 iIndex;
+	int32 iRest;
+
+	if (Item.isStackable)
 	{
-		UE_LOG(LogTemp, Log, TEXT("ID: %d"), InvCell.item.id);
-		UE_LOG(LogTemp, Log, TEXT("Name: %s"), *(InvCell.item.name));
-		UE_LOG(LogTemp, Log, TEXT("Description: %s"), *(InvCell.item.description));
-		UE_LOG(LogTemp, Log, TEXT("Quantity: %d"), InvCell.quantity);
-		UE_LOG(LogTemp, Log, TEXT("\n"));
+		SearchFreeStack(Item, bIsSuccess, iIndex);
+
+		// if free stack was found
+		if (bIsSuccess)
+		{
+			iFoundIndex = iIndex;
+
+			// if overstack
+			if (GetAmountAtIndex(iFoundIndex) + Amount > MaxStackSize)
+			{
+				int32 iAmountLocal = GetAmountAtIndex(iFoundIndex) + Amount - MaxStackSize;
+
+				SetCell(iFoundIndex, Item, MaxStackSize);
+
+				AddItemNew(Item, iAmountLocal, bIsSuccess, iRest, iFoundIndex);
+
+				IsSuccess = true;
+				Rest = iRest;
+				CellIndex = iFoundIndex;
+			}
+			// if no overstack
+			else
+			{
+				SetCell(iFoundIndex, Item, GetAmountAtIndex(iFoundIndex) + Amount);
+
+				IsSuccess = true;
+				Rest = 0;
+				CellIndex = iFoundIndex;
+			}
+		}
+
+		// if free stack was not found
+		if (!bIsSuccess)
+		{
+			SearchEmptyCell(bIsSuccess, iIndex);
+
+			// if empty cell was found
+			if (bIsSuccess)
+			{
+				iFoundIndex = iIndex;
+
+				if (Amount > MaxStackSize)
+				{
+					SetCell(iFoundIndex, Item, MaxStackSize);
+
+					AddItemNew(Item, Amount - MaxStackSize, bIsSuccess, iRest, iFoundIndex);
+
+					IsSuccess = true;
+					Rest = iRest;
+					CellIndex = iFoundIndex;
+				}
+				else
+				{
+					SetCell(iFoundIndex, Item, Amount);
+
+					IsSuccess = true;
+					Rest = 0;
+					CellIndex = iFoundIndex;
+				}
+			}
+
+			// if empty cell was not found
+			if (!bIsSuccess)
+			{
+				IsSuccess = false;
+				Rest = Amount;
+				CellIndex = iFoundIndex;
+			}
+		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("--------------------------------------------------\n"));
+	if (!Item.isStackable)
+	{
+		SearchEmptyCell(bIsSuccess, iIndex);
+
+		if (bIsSuccess)
+		{
+			iFoundIndex = iIndex;
+
+			SetCell(iFoundIndex, Item, 1);
+
+			if (Amount > 1)
+			{
+				AddItemNew(Item, Amount - 1, bIsSuccess, iRest, iFoundIndex);
+
+				IsSuccess = true;
+				Rest = iRest;
+				CellIndex = iFoundIndex;
+			}
+			else
+			{
+				IsSuccess = true;
+				Rest = 0;
+				CellIndex = iFoundIndex;
+			}
+		}
+
+		if (!bIsSuccess)
+		{
+			IsSuccess = false;
+			Rest = Amount;
+			CellIndex = iFoundIndex;
+		}
+	}
 }
 
-int32 UInventory::GetAmountOfCells()
+void UInventory::RemoveItemAtIndex(int32 Index, int32 Amount, bool& IsSuccess)
 {
-	return this->AmountOfCells;
-}
+	IsSuccess = false;
 
-void UInventory::SetAmountOfCells(int32 NewValue)
-{
-	this->AmountOfCells = NewValue;
+	if (!IsCellEmpty(Index))
+	{
+		if (Amount >= GetAmountAtIndex(Index))
+		{
+			Cells[Index].item.id = NULL;
+			Cells[Index].item.name = nullptr;
+			Cells[Index].item.description = nullptr;
+			Cells[Index].item.isStackable = nullptr;
+			Cells[Index].item.Icon = nullptr;
+
+			Cells[Index].quantity = NULL;
+		}
+		else
+		{
+			Cells[Index].quantity -= Amount;
+		}
+
+		IsSuccess = true;
+	}
 }
 
 bool UInventory::IsCellEmpty(int32 CellIndex)
 {
-	if (Cells[CellIndex].quantity == 0) 
+	if (GetAmountAtIndex(CellIndex) == 0)
 	{
 		return true;
 	}
@@ -41,21 +154,7 @@ bool UInventory::IsCellEmpty(int32 CellIndex)
 	return false;
 }
 
-void UInventory::GetItemAtIndex(int32 index, bool &IsCellEmpty, FItemBase &Item, int32 &Amount)
-{
-	// check if a cell by this index is empty
-	IsCellEmpty = UInventory::IsCellEmpty(index);
-	// IsCellEmpty = false;
-
-	// if not empty...
-	if (!IsCellEmpty)
-	{
-		Item = this->Cells[index].item;
-		Amount = this->Cells[index].quantity;
-	}
-}
-
-void UInventory::SearchEmptyCell(bool &IsSuccess, int32 &Index)
+void UInventory::SearchEmptyCell(bool& IsSuccess, int32& Index)
 {
 	IsSuccess = false;
 
@@ -70,7 +169,7 @@ void UInventory::SearchEmptyCell(bool &IsSuccess, int32 &Index)
 	}
 }
 
-void UInventory::SearchFreeStack(FItemBase Item, bool &IsSuccess, int32 &Index)
+void UInventory::SearchFreeStack(FItemBase Item, bool& IsSuccess, int32& Index)
 {
 	IsSuccess = false;
 
@@ -78,8 +177,9 @@ void UInventory::SearchFreeStack(FItemBase Item, bool &IsSuccess, int32 &Index)
 	{
 		if (!IsCellEmpty(i))
 		{
-			// if given item has the same type with founded item, and amount of those items lower than maximum size of stack
-			if (Cells[i].item.id == Item.id && Cells[i].quantity < MaxStackSize)
+			// if given item has the same type with founded item,
+			// and amount of those items lower than maximum size of stack
+			if (Cells[i].item.id == Item.id && GetAmountAtIndex(i) < MaxStackSize)
 			{
 				IsSuccess = true;
 				Index = i;
@@ -89,191 +189,39 @@ void UInventory::SearchFreeStack(FItemBase Item, bool &IsSuccess, int32 &Index)
 	}
 }
 
-void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool &IsSuccess, int32 &Rest, int32 &CellIndex)
-{
-	int32 foundIndex = NULL;
-	bool isSuccess;
-	int32 index;
-	int32 rest;
-
-	if (Item.isStackable)
-	{
-		SearchFreeStack(Item, isSuccess, index);
-
-		// if free stack was found
-		if (isSuccess)
-		{
-			foundIndex = index;
-			
-			// if overstack
-			if (Cells[foundIndex].quantity + Amount > MaxStackSize)
-			{
-				int32 amountLocal = Cells[foundIndex].quantity + Amount - MaxStackSize;
-				
-				Cells[foundIndex].item = Item;
-				Cells[foundIndex].quantity = MaxStackSize;
-
-				AddItemNew(Item, amountLocal, isSuccess, rest, foundIndex);
-
-				// return values
-				IsSuccess = true;
-				Rest = rest;
-				CellIndex = foundIndex;
-			}
-
-			// if no overstack
-			else
-			{
-				Cells[foundIndex].item = Item;
-				Cells[foundIndex].quantity = Cells[foundIndex].quantity + Amount;
-				
-				IsSuccess = true;
-				Rest = 0;
-				CellIndex = foundIndex;
-			}
-		}
-
-		// if free stack was not found
-		if (!isSuccess)
-		{
-			SearchEmptyCell(isSuccess, index);
-
-			// if empty cell was found
-			if (isSuccess)
-			{
-				foundIndex = index;
-				
-				if (Amount > MaxStackSize)
-				{
-					Cells[foundIndex].item = Item;
-					Cells[foundIndex].quantity = MaxStackSize;
-					
-					AddItemNew(Item, Amount - MaxStackSize, isSuccess, rest, foundIndex);
-
-					IsSuccess = true;
-					Rest = rest;
-					CellIndex = foundIndex;
-				}
-
-				else
-				{
-					Cells[foundIndex].item = Item;
-					Cells[foundIndex].quantity = Amount;
-
-					IsSuccess = true;
-					Rest = 0;
-					CellIndex = foundIndex;
-				}
-			}
-
-			// if empty cell was not found
-			if (!isSuccess)
-			{
-				IsSuccess = false;
-				Rest = Amount;
-				CellIndex = foundIndex;
-			}
-		}
-	}
-
-	if (!Item.isStackable)
-	{
-		SearchEmptyCell(isSuccess, index);
-
-		if (isSuccess)
-		{
-			foundIndex = index;
-
-			Cells[foundIndex].item = Item;
-			Cells[foundIndex].quantity = 1;
-
-			if (Amount > 1)
-			{
-				AddItemNew(Item, Amount - 1, isSuccess, rest, foundIndex);
-
-				IsSuccess = true;
-				Rest = rest;
-				CellIndex = foundIndex;
-			}
-			else
-			{
-				IsSuccess = true;
-				Rest = 0;
-				CellIndex = foundIndex;
-			}
-		}
-
-		if (!isSuccess)
-		{
-			IsSuccess = false;
-			Rest = Amount;
-			CellIndex = foundIndex;
-		}
-	}
-}
-
-void UInventory::RemoveItemAtIndex(int32 Index, int32 Amount, bool &IsSuccess)
+void UInventory::SwapCells(int32 Index1, int32 Index2, bool& IsSuccess)
 {
 	IsSuccess = false;
-	
-	if (!IsCellEmpty(Index))
-	{
-		if (Amount >= GetAmountAtIndex(Index))
-		{
-			Cells[Index].item.id = NULL;
-			Cells[Index].item.name = nullptr;
-			Cells[Index].item.description = nullptr;
-			Cells[Index].item.isStackable = nullptr;
-			Cells[Index].item.Icon = nullptr;
 
-			Cells[Index].quantity = NULL;
-			
-			IsSuccess = true;
-		}
-		else
-		{
-			Cells[Index].quantity -= Amount;
-
-			IsSuccess = true;
-		}
-	}
-}
-
-void UInventory::SwapCells(int32 Index1, int32 Index2, bool &IsSuccess)
-{
-	IsSuccess = false;
-	
 	// check if indices are not out of bounds
 	if (Index1 <= Cells.Num() - 1 || Index2 <= Cells.Num() - 1)
 	{
-		FInvCell cellLocal = Cells[Index1];
+		FInvCell sCell = Cells[Index1];
 
 		Cells[Index1] = Cells[Index2];
-		Cells[Index2] = cellLocal;
+		Cells[Index2] = sCell;
 
 		IsSuccess = true;
 	}
 }
 
-void UInventory::SplitStack(int32 StackIndex, int32 Amount, bool &IsSuccess)
+void UInventory::SplitStack(int32 StackIndex, int32 Amount, bool& IsSuccess)
 {
 	IsSuccess = false;
-	
+
 	if (!IsCellEmpty(StackIndex))
 	{
 		if (Cells[StackIndex].item.isStackable && Cells[StackIndex].quantity > Amount)
 		{
-			bool isSuccess;
-			int index;
-			
-			SearchEmptyCell(isSuccess, index);
+			bool bIsSuccess;
+			int iIndex;
 
-			if (isSuccess)
+			SearchEmptyCell(bIsSuccess, iIndex);
+
+			if (bIsSuccess)
 			{
-				Cells[StackIndex].quantity -= Amount;
-
-				Cells[index].item = Cells[StackIndex].item;
-				Cells[index].quantity = Amount;
+				SetCell(StackIndex, GetAmountAtIndex(StackIndex) - Amount);
+				SetCell(iIndex, Cells[StackIndex].item, Amount);
 
 				IsSuccess = true;
 			}
@@ -281,45 +229,63 @@ void UInventory::SplitStack(int32 StackIndex, int32 Amount, bool &IsSuccess)
 	}
 }
 
-void UInventory::AddToIndex(int32 FromIndex, int32 ToIndex, bool &IsSuccess)
+void UInventory::AddToIndex(int32 FromIndex, int32 ToIndex, bool& IsSuccess)
 {
 	IsSuccess = false;
-	
-	if (Cells[FromIndex].item.id == Cells[ToIndex].item.id && Cells[ToIndex].quantity < MaxStackSize && Cells[FromIndex].item.isStackable)
+
+	if (Cells[FromIndex].item.id == Cells[ToIndex].item.id && GetAmountAtIndex(ToIndex) < MaxStackSize
+		&& Cells[FromIndex].item.isStackable)
 	{
 		if (MaxStackSize - GetAmountAtIndex(ToIndex) >= GetAmountAtIndex(FromIndex))
 		{
-			Cells[ToIndex].item = Cells[FromIndex].item;
-			Cells[ToIndex].quantity = GetAmountAtIndex(FromIndex) + GetAmountAtIndex(ToIndex);
+			bool bIsSuccess;
 
-			bool isSuccess;
-			RemoveItemAtIndex(FromIndex, GetAmountAtIndex(FromIndex), isSuccess);
+			SetCell(ToIndex, Cells[FromIndex].item, GetAmountAtIndex(FromIndex) + GetAmountAtIndex(ToIndex));
+			RemoveItemAtIndex(FromIndex, GetAmountAtIndex(FromIndex), bIsSuccess);
 		}
 		else
 		{
-			// Cells[FromIndex].item = Cells[FromIndex].item;
-			Cells[FromIndex].quantity = GetAmountAtIndex(FromIndex) - (MaxStackSize - GetAmountAtIndex(ToIndex));
-
-			Cells[ToIndex].item = Cells[FromIndex].item;
-			Cells[ToIndex].quantity = MaxStackSize;
+			SetCell(FromIndex, GetAmountAtIndex(FromIndex) - (MaxStackSize - GetAmountAtIndex(ToIndex)));
+			SetCell(ToIndex, Cells[FromIndex].item, MaxStackSize);
 		}
 
 		IsSuccess = true;
 	}
 }
 
-void UInventory::SplitStackToIndex(int32 FromIndex, int32 ToIndex, int32 Amount, bool &IsSuccess)
+void UInventory::SplitStackToIndex(int32 FromIndex, int32 ToIndex, int32 Amount, bool& IsSuccess)
 {
 	IsSuccess = false;
 
 	if (IsCellEmpty(ToIndex) && !IsCellEmpty(FromIndex) && Cells[FromIndex].item.isStackable
-		&& Cells[FromIndex].quantity > 1 && Cells[FromIndex].quantity > Amount)
+		&& GetAmountAtIndex(FromIndex) > 1 && GetAmountAtIndex(FromIndex) > Amount)
 	{
-		Cells[FromIndex].quantity -= Amount;
-
-		Cells[ToIndex].item = Cells[FromIndex].item;
-		Cells[ToIndex].quantity = Amount;
+		SetCell(FromIndex, GetAmountAtIndex(FromIndex) - Amount);
+		SetCell(ToIndex, Cells[FromIndex].item, Amount);
 	}
+}
+
+void UInventory::GetItemAtIndex(int32 Index, bool& IsCellEmpty, FItemBase& Item, int32& Amount)
+{
+	// check if a cell by this index is empty
+	IsCellEmpty = UInventory::IsCellEmpty(Index);
+
+	// if not empty...
+	if (!IsCellEmpty)
+	{
+		Item = Cells[Index].item;
+		Amount = Cells[Index].quantity;
+	}
+}
+
+void UInventory::SetAmountOfCells(int32 NewValue)
+{
+	AmountOfCells = NewValue;
+}
+
+int32 UInventory::GetAmountOfCells()
+{
+	return AmountOfCells;
 }
 
 int32 UInventory::GetAmountAtIndex(int32 Index)
@@ -327,14 +293,25 @@ int32 UInventory::GetAmountAtIndex(int32 Index)
 	return Cells[Index].quantity;
 }
 
-void UInventory::GetCells(TArray<FInvCell> &Result)
+void UInventory::GetCells(TArray<FInvCell>& Result)
 {
-	TArray<FInvCell> CellsLocal;
-	
-	for (int i = 0; i < this->Cells.Num(); i++)
-	{
-		CellsLocal[i] = this->Cells[i];
-	}
+	Result = Cells;
+}
 
-	Result = CellsLocal;
+/*--------------------------------------------- PRIVATE --------------------------------------------------------------*/
+
+void UInventory::SetCell(int32 Index, FItemBase Item, int32 Amount)
+{
+	Cells[Index].item = Item;
+	Cells[Index].quantity = Amount;
+}
+
+void UInventory::SetCell(int32 Index, FItemBase Item)
+{
+	Cells[Index].item = Item;
+}
+
+void UInventory::SetCell(int32 Index, int32 Amount)
+{
+	Cells[Index].quantity = Amount;
 }
