@@ -140,6 +140,8 @@ void UInventory::RemoveItemAtIndex(int32 Index, int32 Amount, bool& IsSuccess)
 			Cells[Index].quantity -= Amount;
 		}
 
+		OnInventoryUpdated.Broadcast(Index);
+		
 		IsSuccess = true;
 	}
 }
@@ -201,6 +203,9 @@ void UInventory::SwapCells(int32 Index1, int32 Index2, bool& IsSuccess)
 		Cells[Index1] = Cells[Index2];
 		Cells[Index2] = sCell;
 
+		OnInventoryUpdated.Broadcast(Index1);
+		OnInventoryUpdated.Broadcast(Index2);
+		
 		IsSuccess = true;
 	}
 }
@@ -223,6 +228,8 @@ void UInventory::SplitStack(int32 StackIndex, int32 Amount, bool& IsSuccess)
 				SetCell(StackIndex, GetAmountAtIndex(StackIndex) - Amount);
 				SetCell(iIndex, Cells[StackIndex].item, Amount);
 
+				OnInventoryUpdated.Broadcast(StackIndex);
+				
 				IsSuccess = true;
 			}
 		}
@@ -249,6 +256,9 @@ void UInventory::AddToIndex(int32 FromIndex, int32 ToIndex, bool& IsSuccess)
 			SetCell(ToIndex, Cells[FromIndex].item, MaxStackSize);
 		}
 
+		OnInventoryUpdated.Broadcast(FromIndex);
+		OnInventoryUpdated.Broadcast(ToIndex);
+
 		IsSuccess = true;
 	}
 }
@@ -262,6 +272,9 @@ void UInventory::SplitStackToIndex(int32 FromIndex, int32 ToIndex, int32 Amount,
 	{
 		SetCell(FromIndex, GetAmountAtIndex(FromIndex) - Amount);
 		SetCell(ToIndex, Cells[FromIndex].item, Amount);
+
+		OnInventoryUpdated.Broadcast(FromIndex);
+		OnInventoryUpdated.Broadcast(ToIndex);
 	}
 }
 
@@ -304,14 +317,20 @@ void UInventory::SetCell(int32 Index, FItemBase Item, int32 Amount)
 {
 	Cells[Index].item = Item;
 	Cells[Index].quantity = Amount;
+
+	OnInventoryUpdated.Broadcast(Index);
 }
 
 void UInventory::SetCell(int32 Index, FItemBase Item)
 {
 	Cells[Index].item = Item;
+
+	OnInventoryUpdated.Broadcast(Index);
 }
 
 void UInventory::SetCell(int32 Index, int32 Amount)
 {
 	Cells[Index].quantity = Amount;
+
+	OnInventoryUpdated.Broadcast(Index);
 }

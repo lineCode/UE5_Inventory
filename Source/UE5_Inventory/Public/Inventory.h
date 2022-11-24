@@ -57,7 +57,7 @@ enum EItemCategories
 	Readables
 };
 
-// Delegate to update inventory UI if an item has been added / removed / edited
+// Delegate to update inventory cell UI if an item has been added / removed / edited / moved
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryUpdated, int32, CellToUpdate);
 
 UCLASS(Blueprintable, BlueprintType)
