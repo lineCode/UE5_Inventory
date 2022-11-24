@@ -11,7 +11,7 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool& IsSuccess, int32
 	int32 iIndex;
 	int32 iRest;
 
-	if (Item.isStackable)
+	if (Item.IsStackable)
 	{
 		SearchFreeStack(Item, bIsSuccess, iIndex);
 
@@ -84,7 +84,7 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool& IsSuccess, int32
 		}
 	}
 
-	if (!Item.isStackable)
+	if (!Item.IsStackable)
 	{
 		SearchEmptyCell(bIsSuccess, iIndex);
 
@@ -127,20 +127,20 @@ void UInventory::RemoveItemAtIndex(int32 Index, int32 Amount, bool& IsSuccess)
 	{
 		if (Amount >= GetAmountAtIndex(Index))
 		{
-			Cells[Index].item.id = NULL;
-			Cells[Index].item.name = nullptr;
-			Cells[Index].item.description = nullptr;
-			Cells[Index].item.isStackable = nullptr;
-			Cells[Index].item.Icon = nullptr;
+			Cells[Index].Item.ID = NULL;
+			Cells[Index].Item.Name = nullptr;
+			Cells[Index].Item.Description = nullptr;
+			Cells[Index].Item.IsStackable = nullptr;
+			Cells[Index].Item.Icon = nullptr;
 
-			Cells[Index].quantity = NULL;
+			Cells[Index].Amount = NULL;
 		}
 		else
 		{
-			Cells[Index].quantity -= Amount;
+			Cells[Index].Amount -= Amount;
 		}
 
-		OnInventoryUpdated.Broadcast(Index);
+		OnCellUpdated.Broadcast(Index);
 		
 		IsSuccess = true;
 	}
@@ -181,7 +181,7 @@ void UInventory::SearchFreeStack(FItemBase Item, bool& IsSuccess, int32& Index)
 		{
 			// if given item has the same type with founded item,
 			// and amount of those items lower than maximum size of stack
-			if (Cells[i].item.id == Item.id && GetAmountAtIndex(i) < MaxStackSize)
+			if (Cells[i].Item.ID == Item.ID && GetAmountAtIndex(i) < MaxStackSize)
 			{
 				IsSuccess = true;
 				Index = i;
@@ -203,8 +203,8 @@ void UInventory::SwapCells(int32 Index1, int32 Index2, bool& IsSuccess)
 		Cells[Index1] = Cells[Index2];
 		Cells[Index2] = sCell;
 
-		OnInventoryUpdated.Broadcast(Index1);
-		OnInventoryUpdated.Broadcast(Index2);
+		OnCellUpdated.Broadcast(Index1);
+		OnCellUpdated.Broadcast(Index2);
 		
 		IsSuccess = true;
 	}
@@ -216,7 +216,7 @@ void UInventory::SplitStack(int32 StackIndex, int32 Amount, bool& IsSuccess)
 
 	if (!IsCellEmpty(StackIndex))
 	{
-		if (Cells[StackIndex].item.isStackable && Cells[StackIndex].quantity > Amount)
+		if (Cells[StackIndex].Item.IsStackable && Cells[StackIndex].Amount > Amount)
 		{
 			bool bIsSuccess;
 			int iIndex;
@@ -226,9 +226,9 @@ void UInventory::SplitStack(int32 StackIndex, int32 Amount, bool& IsSuccess)
 			if (bIsSuccess)
 			{
 				SetCell(StackIndex, GetAmountAtIndex(StackIndex) - Amount);
-				SetCell(iIndex, Cells[StackIndex].item, Amount);
+				SetCell(iIndex, Cells[StackIndex].Item, Amount);
 
-				OnInventoryUpdated.Broadcast(StackIndex);
+				OnCellUpdated.Broadcast(StackIndex);
 				
 				IsSuccess = true;
 			}
@@ -240,24 +240,24 @@ void UInventory::AddToIndex(int32 FromIndex, int32 ToIndex, bool& IsSuccess)
 {
 	IsSuccess = false;
 
-	if (Cells[FromIndex].item.id == Cells[ToIndex].item.id && GetAmountAtIndex(ToIndex) < MaxStackSize
-		&& Cells[FromIndex].item.isStackable)
+	if (Cells[FromIndex].Item.ID == Cells[ToIndex].Item.ID && GetAmountAtIndex(ToIndex) < MaxStackSize
+		&& Cells[FromIndex].Item.IsStackable)
 	{
 		if (MaxStackSize - GetAmountAtIndex(ToIndex) >= GetAmountAtIndex(FromIndex))
 		{
 			bool bIsSuccess;
 
-			SetCell(ToIndex, Cells[FromIndex].item, GetAmountAtIndex(FromIndex) + GetAmountAtIndex(ToIndex));
+			SetCell(ToIndex, Cells[FromIndex].Item, GetAmountAtIndex(FromIndex) + GetAmountAtIndex(ToIndex));
 			RemoveItemAtIndex(FromIndex, GetAmountAtIndex(FromIndex), bIsSuccess);
 		}
 		else
 		{
 			SetCell(FromIndex, GetAmountAtIndex(FromIndex) - (MaxStackSize - GetAmountAtIndex(ToIndex)));
-			SetCell(ToIndex, Cells[FromIndex].item, MaxStackSize);
+			SetCell(ToIndex, Cells[FromIndex].Item, MaxStackSize);
 		}
 
-		OnInventoryUpdated.Broadcast(FromIndex);
-		OnInventoryUpdated.Broadcast(ToIndex);
+		OnCellUpdated.Broadcast(FromIndex);
+		OnCellUpdated.Broadcast(ToIndex);
 
 		IsSuccess = true;
 	}
@@ -267,14 +267,14 @@ void UInventory::SplitStackToIndex(int32 FromIndex, int32 ToIndex, int32 Amount,
 {
 	IsSuccess = false;
 
-	if (IsCellEmpty(ToIndex) && !IsCellEmpty(FromIndex) && Cells[FromIndex].item.isStackable
+	if (IsCellEmpty(ToIndex) && !IsCellEmpty(FromIndex) && Cells[FromIndex].Item.IsStackable
 		&& GetAmountAtIndex(FromIndex) > 1 && GetAmountAtIndex(FromIndex) > Amount)
 	{
 		SetCell(FromIndex, GetAmountAtIndex(FromIndex) - Amount);
-		SetCell(ToIndex, Cells[FromIndex].item, Amount);
+		SetCell(ToIndex, Cells[FromIndex].Item, Amount);
 
-		OnInventoryUpdated.Broadcast(FromIndex);
-		OnInventoryUpdated.Broadcast(ToIndex);
+		OnCellUpdated.Broadcast(FromIndex);
+		OnCellUpdated.Broadcast(ToIndex);
 	}
 }
 
@@ -286,8 +286,8 @@ void UInventory::GetItemAtIndex(int32 Index, bool& IsCellEmpty, FItemBase& Item,
 	// if not empty...
 	if (!IsCellEmpty)
 	{
-		Item = Cells[Index].item;
-		Amount = Cells[Index].quantity;
+		Item = Cells[Index].Item;
+		Amount = Cells[Index].Amount;
 	}
 }
 
@@ -303,7 +303,7 @@ int32 UInventory::GetAmountOfCells()
 
 int32 UInventory::GetAmountAtIndex(int32 Index)
 {
-	return Cells[Index].quantity;
+	return Cells[Index].Amount;
 }
 
 void UInventory::GetCells(TArray<FInvCell>& Result)
@@ -315,22 +315,22 @@ void UInventory::GetCells(TArray<FInvCell>& Result)
 
 void UInventory::SetCell(int32 Index, FItemBase Item, int32 Amount)
 {
-	Cells[Index].item = Item;
-	Cells[Index].quantity = Amount;
+	Cells[Index].Item = Item;
+	Cells[Index].Amount = Amount;
 
-	OnInventoryUpdated.Broadcast(Index);
+	OnCellUpdated.Broadcast(Index);
 }
 
 void UInventory::SetCell(int32 Index, FItemBase Item)
 {
-	Cells[Index].item = Item;
+	Cells[Index].Item = Item;
 
-	OnInventoryUpdated.Broadcast(Index);
+	OnCellUpdated.Broadcast(Index);
 }
 
 void UInventory::SetCell(int32 Index, int32 Amount)
 {
-	Cells[Index].quantity = Amount;
+	Cells[Index].Amount = Amount;
 
-	OnInventoryUpdated.Broadcast(Index);
+	OnCellUpdated.Broadcast(Index);
 }

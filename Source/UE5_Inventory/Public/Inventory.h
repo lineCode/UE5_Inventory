@@ -13,22 +13,19 @@ struct FItemBase
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int32 id;
+	int32 ID;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString name;
+	FString Name;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString description;
+	FString Description;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool isStackable;
+	bool IsStackable;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UTexture2D* Icon;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	UMaterialInterface* ItemIcon;
 };
 
 // Base struct of cells
@@ -38,13 +35,10 @@ struct FInvCell
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite)
-	int32 index;
+	FItemBase Item;
 
 	UPROPERTY(BlueprintReadWrite)
-	FItemBase item;
-
-	UPROPERTY(BlueprintReadWrite)
-	int32 quantity;
+	int32 Amount;
 };
 
 // List of item types
@@ -58,7 +52,7 @@ enum EItemCategories
 };
 
 // Delegate to update inventory cell UI if an item has been added / removed / edited / moved
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryUpdated, int32, CellToUpdate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCellUpdated, int32, CellToUpdate);
 
 UCLASS(Blueprintable, BlueprintType)
 class UE5_INVENTORY_API UInventory : public UActorComponent
@@ -132,7 +126,7 @@ public:
 
 	// Signature of FOnInventoryUpdated delegate
 	UPROPERTY(BlueprintAssignable)
-	FOnInventoryUpdated OnInventoryUpdated;
+	FOnCellUpdated OnCellUpdated;
 
 	// Array of cells
 	UPROPERTY(BlueprintReadWrite)
