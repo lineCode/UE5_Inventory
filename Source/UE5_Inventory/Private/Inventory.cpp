@@ -8,18 +8,15 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool& IsSuccess, int32
 {
 	int32 iFoundIndex = NULL;
 	bool bIsSuccess;
-	int32 iIndex;
 	int32 iRest;
 
 	if (Item.IsStackable)
 	{
-		SearchFreeStack(Item, bIsSuccess, iIndex);
+		SearchFreeStack(Item, bIsSuccess, iFoundIndex);
 
 		// if free stack was found
 		if (bIsSuccess)
 		{
-			iFoundIndex = iIndex;
-
 			// if overstack
 			if (GetAmountAtIndex(iFoundIndex) + Amount > MaxStackSize)
 			{
@@ -47,13 +44,11 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool& IsSuccess, int32
 		// if free stack was not found
 		if (!bIsSuccess)
 		{
-			SearchEmptyCell(bIsSuccess, iIndex);
+			SearchEmptyCell(bIsSuccess, iFoundIndex);
 
 			// if empty cell was found
 			if (bIsSuccess)
 			{
-				iFoundIndex = iIndex;
-
 				if (Amount > MaxStackSize)
 				{
 					SetCell(iFoundIndex, Item, MaxStackSize);
@@ -86,12 +81,10 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool& IsSuccess, int32
 
 	if (!Item.IsStackable)
 	{
-		SearchEmptyCell(bIsSuccess, iIndex);
+		SearchEmptyCell(bIsSuccess, iFoundIndex);
 
 		if (bIsSuccess)
 		{
-			iFoundIndex = iIndex;
-
 			SetCell(iFoundIndex, Item, 1);
 
 			if (Amount > 1)
@@ -309,6 +302,11 @@ int32 UInventory::GetAmountAtIndex(int32 Index)
 void UInventory::GetCells(TArray<FInvCell>& Result)
 {
 	Result = Cells;
+}
+
+AActor* UInventory::GetOwner()
+{
+	return this->Owner;
 }
 
 /*--------------------------------------------- PRIVATE --------------------------------------------------------------*/

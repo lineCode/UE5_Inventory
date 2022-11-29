@@ -54,14 +54,17 @@ enum EItemCategories
 // Delegate to update inventory cell UI if an item has been added / removed / edited / moved
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCellUpdated, int32, CellToUpdate);
 
+// Delegate to entire update inventory UI
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
+
 UCLASS(Blueprintable, BlueprintType)
-class UE5_INVENTORY_API UInventory : public UActorComponent
+class/*UE5_INVENTORY_API*/ UInventory : public UObject
 {
 	GENERATED_BODY()
 
 public:
 	/*--------------------------------------------- FUNCTIONS --------------------------------------------------------*/
-
+	
 	// Adds an item to the cell
 	UFUNCTION(BlueprintCallable)
 	void AddItemNew(FItemBase Item, int32 Amount, bool& IsSuccess, int32& Rest, int32& CellIndex);
@@ -122,19 +125,30 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	void GetCells(TArray<FInvCell>& Result);
 
+	AActor* GetOwner();
+
 	/*--------------------------------------------- PROPERTIES -------------------------------------------------------*/
+
+	// Reference to the actor (owner)
+	UPROPERTY(BlueprintReadOnly, meta=(ExposeOnSpawn=true))
+	AActor *Owner;
+	
+	// Signature of FOnCellUpdated delegate
+	UPROPERTY(BlueprintAssignable)
+	FOnCellUpdated OnCellUpdated;
 
 	// Signature of FOnInventoryUpdated delegate
 	UPROPERTY(BlueprintAssignable)
-	FOnCellUpdated OnCellUpdated;
+	FOnInventoryUpdated OnInventoryUpdated;
 
 	// Array of cells
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FInvCell> Cells;
 
-private:
 	// Amount of cells
+	UPROPERTY(BlueprintReadOnly, meta=(ExposeOnSpawn=true))
 	int32 AmountOfCells = 20;
+private:
 
 	// Max size of stack
 	int32 MaxStackSize = 99;
