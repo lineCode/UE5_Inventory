@@ -271,6 +271,16 @@ void UInventory::SplitStackToIndex(int32 FromIndex, int32 ToIndex, int32 Amount,
 	}
 }
 
+void UInventory::AddCell()
+{
+	Cells.SetNum(Cells.Num() + 1);
+}
+
+void UInventory::RemoveCell(int32 CellIndex)
+{
+	Cells.RemoveAt(CellIndex);
+}
+
 void UInventory::GetItemAtIndex(int32 Index, bool& IsCellEmpty, FItemBase& Item, int32& Amount)
 {
 	// check if a cell by this index is empty

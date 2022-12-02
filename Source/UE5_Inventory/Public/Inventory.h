@@ -103,6 +103,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SplitStackToIndex(int32 FromIndex, int32 ToIndex, int32 Amount, bool& IsSuccess);
 
+	// Creates a new cell
+	UFUNCTION(BlueprintCallable)
+	void AddCell();
+
+	// Removes a cell by index
+	UFUNCTION(BlueprintCallable)
+	void RemoveCell(int32 CellIndex);
+
 	/*--------------------------------------------- GETTERS / SETTERS ------------------------------------------------*/
 
 	// Gets item info by index
