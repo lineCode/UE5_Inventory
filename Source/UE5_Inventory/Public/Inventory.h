@@ -133,13 +133,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	void GetCells(TArray<FInvCell>& Result);
 
-	AActor* GetOwner();
-
 	/*--------------------------------------------- PROPERTIES -------------------------------------------------------*/
-
-	// Reference to the actor (owner)
-	UPROPERTY(BlueprintReadOnly, meta=(ExposeOnSpawn=true))
-	AActor *Owner;
 	
 	// Signature of FOnCellUpdated delegate
 	UPROPERTY(BlueprintAssignable)

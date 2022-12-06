@@ -314,11 +314,6 @@ void UInventory::GetCells(TArray<FInvCell>& Result)
 	Result = Cells;
 }
 
-AActor* UInventory::GetOwner()
-{
-	return this->Owner;
-}
-
 /*--------------------------------------------- PRIVATE --------------------------------------------------------------*/
 
 void UInventory::SetCell(int32 Index, FItemBase Item, int32 Amount)
