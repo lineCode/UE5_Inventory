@@ -4,13 +4,13 @@
 
 /*--------------------------------------------- PUBLIC ---------------------------------------------------------------*/
 
-void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool& IsSuccess, int32& Rest, int32& CellIndex)
+void UInventory::AddItemNew(TSubclassOf<UItem> Item, int32 Amount, bool& IsSuccess, int32& Rest, int32& CellIndex)
 {
 	int32 iFoundIndex = NULL;
 	bool bIsSuccess;
 	int32 iRest;
 
-	if (Item.IsStackable)
+	if (Item.GetDefaultObject()->IsStackable)
 	{
 		SearchFreeStack(Item, bIsSuccess, iFoundIndex);
 
@@ -79,7 +79,7 @@ void UInventory::AddItemNew(FItemBase Item, int32 Amount, bool& IsSuccess, int32
 		}
 	}
 
-	if (!Item.IsStackable)
+	if (!Item.GetDefaultObject()->IsStackable)
 	{
 		SearchEmptyCell(bIsSuccess, iFoundIndex);
 
@@ -120,11 +120,11 @@ void UInventory::RemoveItemAtIndex(int32 Index, int32 Amount, bool& IsSuccess)
 	{
 		if (Amount >= GetAmountAtIndex(Index))
 		{
-			Cells[Index].Item.ID = NULL;
-			Cells[Index].Item.Name = nullptr;
-			Cells[Index].Item.Description = nullptr;
-			Cells[Index].Item.IsStackable = nullptr;
-			Cells[Index].Item.Icon = nullptr;
+			Cells[Index].Item.GetDefaultObject()->ID = NULL;
+			Cells[Index].Item.GetDefaultObject()->Name = nullptr;
+			Cells[Index].Item.GetDefaultObject()->Description = nullptr;
+			Cells[Index].Item.GetDefaultObject()->IsStackable = nullptr;
+			Cells[Index].Item.GetDefaultObject()->Icon = nullptr;
 
 			Cells[Index].Amount = NULL;
 		}
@@ -136,6 +136,27 @@ void UInventory::RemoveItemAtIndex(int32 Index, int32 Amount, bool& IsSuccess)
 		OnCellUpdated.Broadcast(Index);
 		
 		IsSuccess = true;
+	}
+}
+
+void UInventory::UseItem(int32 CellIndex)
+{
+	bool bIsEmpty;
+	TSubclassOf<UItem> uItem;
+	int32 iAmount;
+	
+	GetItemAtIndex(CellIndex, bIsEmpty, uItem, iAmount);
+
+	if (!bIsEmpty)
+	{
+		bool bIsSuccess;
+		
+		RemoveItemAtIndex(CellIndex, 1, bIsSuccess);
+
+		if (bIsSuccess)
+		{
+			uItem.GetDefaultObject()->OnUsed();
+		}
 	}
 }
 
@@ -164,7 +185,7 @@ void UInventory::SearchEmptyCell(bool& IsSuccess, int32& Index)
 	}
 }
 
-void UInventory::SearchFreeStack(FItemBase Item, bool& IsSuccess, int32& Index)
+void UInventory::SearchFreeStack(TSubclassOf<UItem> Item, bool& IsSuccess, int32& Index)
 {
 	IsSuccess = false;
 
@@ -174,7 +195,7 @@ void UInventory::SearchFreeStack(FItemBase Item, bool& IsSuccess, int32& Index)
 		{
 			// if given item has the same type with founded item,
 			// and amount of those items lower than maximum size of stack
-			if (Cells[i].Item.ID == Item.ID && GetAmountAtIndex(i) < MaxStackSize)
+			if (Cells[i].Item.GetDefaultObject()->ID == Item.GetDefaultObject()->ID && GetAmountAtIndex(i) < MaxStackSize)
 			{
 				IsSuccess = true;
 				Index = i;
@@ -209,7 +230,7 @@ void UInventory::SplitStack(int32 StackIndex, int32 Amount, bool& IsSuccess)
 
 	if (!IsCellEmpty(StackIndex))
 	{
-		if (Cells[StackIndex].Item.IsStackable && Cells[StackIndex].Amount > Amount)
+		if (Cells[StackIndex].Item.GetDefaultObject()->IsStackable && Cells[StackIndex].Amount > Amount)
 		{
 			bool bIsSuccess;
 			int iIndex;
@@ -233,8 +254,8 @@ void UInventory::AddToIndex(int32 FromIndex, int32 ToIndex, bool& IsSuccess)
 {
 	IsSuccess = false;
 
-	if (Cells[FromIndex].Item.ID == Cells[ToIndex].Item.ID && GetAmountAtIndex(ToIndex) < MaxStackSize
-		&& Cells[FromIndex].Item.IsStackable)
+	if (Cells[FromIndex].Item.GetDefaultObject()->ID == Cells[ToIndex].Item.GetDefaultObject()->ID
+		&& GetAmountAtIndex(ToIndex) < MaxStackSize && Cells[FromIndex].Item.GetDefaultObject()->IsStackable)
 	{
 		if (MaxStackSize - GetAmountAtIndex(ToIndex) >= GetAmountAtIndex(FromIndex))
 		{
@@ -260,7 +281,7 @@ void UInventory::SplitStackToIndex(int32 FromIndex, int32 ToIndex, int32 Amount,
 {
 	IsSuccess = false;
 
-	if (IsCellEmpty(ToIndex) && !IsCellEmpty(FromIndex) && Cells[FromIndex].Item.IsStackable
+	if (IsCellEmpty(ToIndex) && !IsCellEmpty(FromIndex) && Cells[FromIndex].Item.GetDefaultObject()->IsStackable
 		&& GetAmountAtIndex(FromIndex) > 1 && GetAmountAtIndex(FromIndex) > Amount)
 	{
 		SetCell(FromIndex, GetAmountAtIndex(FromIndex) - Amount);
@@ -281,7 +302,7 @@ void UInventory::RemoveCell(int32 CellIndex)
 	Cells.RemoveAt(CellIndex);
 }
 
-void UInventory::GetItemAtIndex(int32 Index, bool& IsCellEmpty, FItemBase& Item, int32& Amount)
+void UInventory::GetItemAtIndex(int32 Index, bool& IsCellEmpty, TSubclassOf<UItem>& Item, int32& Amount)
 {
 	// check if a cell by this index is empty
 	IsCellEmpty = UInventory::IsCellEmpty(Index);
@@ -316,7 +337,7 @@ void UInventory::GetCells(TArray<FInvCell>& Result)
 
 /*--------------------------------------------- PRIVATE --------------------------------------------------------------*/
 
-void UInventory::SetCell(int32 Index, FItemBase Item, int32 Amount)
+void UInventory::SetCell(int32 Index, TSubclassOf<UItem> Item, int32 Amount)
 {
 	Cells[Index].Item = Item;
 	Cells[Index].Amount = Amount;
@@ -324,7 +345,7 @@ void UInventory::SetCell(int32 Index, FItemBase Item, int32 Amount)
 	OnCellUpdated.Broadcast(Index);
 }
 
-void UInventory::SetCell(int32 Index, FItemBase Item)
+void UInventory::SetCell(int32 Index, TSubclassOf<UItem> Item)
 {
 	Cells[Index].Item = Item;
 

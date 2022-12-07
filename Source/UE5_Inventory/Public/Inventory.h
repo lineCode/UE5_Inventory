@@ -3,30 +3,31 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Item.h"
 #include "UObject/NoExportTypes.h"
 #include "Inventory.generated.h"
 
 // Base struct of items
-USTRUCT(BlueprintType)
-struct FItemBase
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int32 ID;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString Name;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString Description;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool IsStackable;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	UTexture2D* Icon;
-};
+// USTRUCT(BlueprintType)
+// struct FItemBase
+// {
+// 	GENERATED_BODY()
+//
+// 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+// 	int32 ID;
+//
+// 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+// 	FString Name;
+//
+// 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+// 	FString Description;
+//
+// 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+// 	bool IsStackable;
+//
+// 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+// 	UTexture2D* Icon;
+// };
 
 // Base struct of cells
 USTRUCT(BlueprintType)
@@ -35,7 +36,7 @@ struct FInvCell
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite)
-	FItemBase Item;
+	TSubclassOf<UItem> Item;
 
 	UPROPERTY(BlueprintReadWrite)
 	int32 Amount;
@@ -67,11 +68,14 @@ public:
 	
 	// Adds an item to the cell
 	UFUNCTION(BlueprintCallable)
-	void AddItemNew(FItemBase Item, int32 Amount, bool& IsSuccess, int32& Rest, int32& CellIndex);
+	void AddItemNew(TSubclassOf<UItem> Item, int32 Amount, bool& IsSuccess, int32& Rest, int32& CellIndex);
 
 	// Removes certain number of items by index
 	UFUNCTION(BlueprintCallable)
 	void RemoveItemAtIndex(int32 Index, int32 Amount, bool& IsSuccess);
+
+	UFUNCTION(BlueprintCallable)
+	void UseItem(int32 CellIndex);
 
 	// Checks if cell by this index is empty
 	UFUNCTION(BlueprintCallable)
@@ -83,7 +87,7 @@ public:
 
 	// To find empty stack
 	UFUNCTION(BlueprintCallable)
-	void SearchFreeStack(FItemBase Item, bool& IsSuccess, int32& Index);
+	void SearchFreeStack(TSubclassOf<UItem> Item, bool& IsSuccess, int32& Index);
 
 	// Swaps two cells
 	UFUNCTION(BlueprintCallable)
@@ -115,7 +119,7 @@ public:
 
 	// Gets item info by index
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	void GetItemAtIndex(int32 Index, bool& IsCellEmpty, FItemBase& Item, int32& Amount);
+	void GetItemAtIndex(int32 Index, bool& IsCellEmpty, TSubclassOf<UItem>& Item, int32& Amount);
 
 	// Sets new amount of cells
 	UFUNCTION(BlueprintCallable)
@@ -156,10 +160,10 @@ private:
 	int32 MaxStackSize = 99;
 
 	// Sets new Item and Amount of the cell
-	FORCEINLINE void SetCell(int32 Index, FItemBase Item, int32 Amount);
+	FORCEINLINE void SetCell(int32 Index, TSubclassOf<UItem> Item, int32 Amount);
 
 	// Sets new Item of the cell
-	FORCEINLINE void SetCell(int32 Index, FItemBase Item);
+	FORCEINLINE void SetCell(int32 Index, TSubclassOf<UItem> Item);
 
 	// Sets new Amount of the cell
 	FORCEINLINE void SetCell(int32 Index, int32 Amount);

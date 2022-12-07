@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class UE5_INVENTORY_API UItem : public UObject
 {
 	GENERATED_BODY()
@@ -17,8 +17,8 @@ class UE5_INVENTORY_API UItem : public UObject
 public:
 
 	// performs item's ability
-	UFUNCTION(BlueprintCallable)
-	void UseItem();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void OnUsed();
 
 	// unique id
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)

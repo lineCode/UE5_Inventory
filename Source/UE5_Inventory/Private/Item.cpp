@@ -3,7 +3,6 @@
 
 #include "Item.h"
 
-void UItem::UseItem()
+void UItem::OnUsed_Implementation()
 {
-	
 }
