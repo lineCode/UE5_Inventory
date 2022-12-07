@@ -120,13 +120,14 @@ void UInventory::RemoveItemAtIndex(int32 Index, int32 Amount, bool& IsSuccess)
 	{
 		if (Amount >= GetAmountAtIndex(Index))
 		{
-			Cells[Index].Item.GetDefaultObject()->ID = NULL;
-			Cells[Index].Item.GetDefaultObject()->Name = nullptr;
-			Cells[Index].Item.GetDefaultObject()->Description = nullptr;
-			Cells[Index].Item.GetDefaultObject()->IsStackable = nullptr;
-			Cells[Index].Item.GetDefaultObject()->Icon = nullptr;
+			// Cells[Index].Item.GetDefaultObject()->ID = NULL;
+			// Cells[Index].Item.GetDefaultObject()->Name = nullptr;
+			// Cells[Index].Item.GetDefaultObject()->Description = nullptr;
+			// Cells[Index].Item.GetDefaultObject()->IsStackable = nullptr;
+			// Cells[Index].Item.GetDefaultObject()->Icon = nullptr;
+			Cells[Index].Item = nullptr;
 
-			Cells[Index].Amount = NULL;
+			Cells[Index].Amount = 0;
 		}
 		else
 		{
@@ -152,7 +153,7 @@ void UInventory::UseItem(int32 CellIndex)
 		bool bIsSuccess;
 		
 		RemoveItemAtIndex(CellIndex, 1, bIsSuccess);
-
+	
 		if (bIsSuccess)
 		{
 			uItem.GetDefaultObject()->OnUsed();
