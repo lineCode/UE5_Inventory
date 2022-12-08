@@ -20,6 +20,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnUsed();
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void OnComplete();
+
 	// unique id
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 ID;

@@ -7,28 +7,6 @@
 #include "UObject/NoExportTypes.h"
 #include "Inventory.generated.h"
 
-// Base struct of items
-// USTRUCT(BlueprintType)
-// struct FItemBase
-// {
-// 	GENERATED_BODY()
-//
-// 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-// 	int32 ID;
-//
-// 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-// 	FString Name;
-//
-// 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-// 	FString Description;
-//
-// 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-// 	bool IsStackable;
-//
-// 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-// 	UTexture2D* Icon;
-// };
-
 // Base struct of cells
 USTRUCT(BlueprintType)
 struct FInvCell
@@ -40,16 +18,6 @@ struct FInvCell
 
 	UPROPERTY(BlueprintReadWrite)
 	int32 Amount;
-};
-
-// List of item types
-UENUM(BlueprintType)
-enum EItemCategories
-{
-	Consumable,
-	Equipment,
-	QuestItems,
-	Readables
 };
 
 // Delegate to update inventory cell UI if an item has been added / removed / edited / moved

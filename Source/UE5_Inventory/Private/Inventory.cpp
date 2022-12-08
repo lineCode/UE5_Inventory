@@ -120,13 +120,10 @@ void UInventory::RemoveItemAtIndex(int32 Index, int32 Amount, bool& IsSuccess)
 	{
 		if (Amount >= GetAmountAtIndex(Index))
 		{
-			// Cells[Index].Item.GetDefaultObject()->ID = NULL;
-			// Cells[Index].Item.GetDefaultObject()->Name = nullptr;
-			// Cells[Index].Item.GetDefaultObject()->Description = nullptr;
-			// Cells[Index].Item.GetDefaultObject()->IsStackable = nullptr;
-			// Cells[Index].Item.GetDefaultObject()->Icon = nullptr;
-			Cells[Index].Item = nullptr;
-
+			// make an item empty instead of removing entire element from array
+			TSubclassOf<UItem> uItem;
+			
+			Cells[Index].Item = uItem;
 			Cells[Index].Amount = 0;
 		}
 		else

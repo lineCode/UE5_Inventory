@@ -6,3 +6,7 @@
 void UItem::OnUsed_Implementation()
 {
 }
+
+void UItem::OnComplete_Implementation()
+{
+}
